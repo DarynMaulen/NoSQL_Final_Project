@@ -34,7 +34,7 @@ exports.createComment = async (req, res) => {
         session.endSession();
 
         // populate author for response
-        await comment.populate({ path: 'author', select: 'username' }).execPopulate();
+        await comment.populate({ path: 'author', select: 'username' });
 
         return res.status(201).json({ comment });
     } catch (err) {
