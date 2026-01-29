@@ -6,6 +6,7 @@ const morgan = require('morgan');
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
+const postsRoutes = require('./routes/posts');
 
 const app = express();
 const PORT = process.env.PORT;
@@ -17,6 +18,8 @@ app.use(morgan('dev'));
 
 // routes
 app.use('/api/auth', authRoutes);
+app.use('/api/posts', postsRoutes);
+
 
 // health
 app.get('/health', (req, res) => res.json({ ok: true, time: new Date() }));
