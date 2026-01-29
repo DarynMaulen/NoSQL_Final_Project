@@ -1,6 +1,6 @@
 const Post = require('../models/Post');
 const Comment = require('../models/Comment');
-const { Types } = require('mongoose');
+const mongoose = require('mongoose');
 
 // Create post
 exports.createPost = async (req, res) => {
@@ -34,7 +34,7 @@ exports.listPosts = async (req, res) => {
             tag,
             category,
             author,
-            status = 'published',
+            status,
             search,
             sort = '-createdAt'
         } = req.query;
@@ -43,12 +43,13 @@ exports.listPosts = async (req, res) => {
         if (status) q.status = status;
         if (tag) q.tags = tag;
         if (category) q.category = category;
-        if (author && Types.ObjectId.isValid(author)) q.author = author;
+        if (author && mongoose.Types.ObjectId.isValid(author)) {
+            q.author = new mongoose.Types.ObjectId(author);
+        }
         if (search) q.$text = { $search: search };
 
         const skip = (Math.max(1, parseInt(page)) - 1) * Math.max(1, parseInt(limit));
 
-        // aggregation to populate author (only username/email) and include commentsCount/later
         const posts = await Post.find(q)
             .sort(sort)
             .skip(skip)
@@ -65,14 +66,14 @@ exports.listPosts = async (req, res) => {
     }
 };
 
-// Get single post (with author and comments (first N) via aggregate lookup)
+// Get single post
 exports.getPost = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
+        if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
 
         const pipeline = [
-            { $match: { _id: Types.ObjectId(id) } },
+            { $match: { _id: new mongoose.Types.ObjectId(id) } },
             {
                 $lookup: {
                     from: 'users',
@@ -89,7 +90,7 @@ exports.getPost = async (req, res) => {
                     pipeline: [
                         { $match: { $expr: { $eq: ['$postId', '$$postId'] } } },
                         { $sort: { createdAt: -1 } },
-                        { $limit: 50 }, // load up to 50 comments
+                        { $limit: 50 },
                         {
                             $lookup: {
                                 from: 'users',
@@ -132,13 +133,13 @@ exports.getPost = async (req, res) => {
             }
         ];
 
-        const [post] = await Post.aggregate(pipeline);
-        if (!post) return res.status(404).json({ message: 'Post not found' });
+        const results = await Post.aggregate(pipeline);
+        if (!results || results.length === 0) return res.status(404).json({ message: 'Post not found' });
 
-        return res.json({ post });
+        return res.json({ post: results[0] });
     } catch (err) {
         console.error('getPost', err);
-        return res.status(500).json({ message: 'Server error' });
+        return res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
 
@@ -146,9 +147,9 @@ exports.getPost = async (req, res) => {
 exports.updatePost = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, content, tags, category, status } = req.body;
-        if (!Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
+        if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
 
+        const { title, content, tags, category, status } = req.body;
         const update = {};
         if (title) update.title = title;
         if (content) update.content = content;
@@ -169,19 +170,18 @@ exports.updatePost = async (req, res) => {
     }
 };
 
-// Delete post (hard delete) or soft delete via query param ?soft=true
+// Delete post
 exports.deletePost = async (req, res) => {
     try {
         const { id } = req.params;
         const soft = req.query.soft === 'true';
-        if (!Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
+        if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
 
         if (soft) {
             const post = await Post.findByIdAndUpdate(id, { $set: { status: 'archived', updatedAt: new Date() } }, { new: true });
             if (!post) return res.status(404).json({ message: 'Post not found' });
             return res.json({ message: 'Post archived', post });
         } else {
-            // hard delete + delete comments
             const post = await Post.findByIdAndDelete(id);
             if (!post) return res.status(404).json({ message: 'Post not found' });
             await Comment.deleteMany({ postId: post._id });
@@ -193,12 +193,13 @@ exports.deletePost = async (req, res) => {
     }
 };
 
-// Add tag (safe add)
+// Add tag
 exports.addTag = async (req, res) => {
     try {
         const { id } = req.params;
         const { tag } = req.body;
         if (!tag) return res.status(400).json({ message: 'tag required' });
+        if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
 
         const post = await Post.findByIdAndUpdate(id, { $addToSet: { tags: tag } }, { new: true });
         if (!post) return res.status(404).json({ message: 'Post not found' });
@@ -215,6 +216,7 @@ exports.removeTag = async (req, res) => {
         const { id } = req.params;
         const { tag } = req.body;
         if (!tag) return res.status(400).json({ message: 'tag required' });
+        if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
 
         const post = await Post.findByIdAndUpdate(id, { $pull: { tags: tag } }, { new: true });
         if (!post) return res.status(404).json({ message: 'Post not found' });
@@ -230,12 +232,13 @@ exports.toggleLike = async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user._id;
+        if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
+
         const post = await Post.findById(id);
         if (!post) return res.status(404).json({ message: 'Post not found' });
 
         const already = post.likedBy.some(x => x.toString() === userId.toString());
         if (already) {
-            // remove
             await Post.updateOne({ _id: id }, { $pull: { likedBy: userId }, $inc: { likes: -1 } });
             return res.json({ message: 'Unliked' });
         } else {

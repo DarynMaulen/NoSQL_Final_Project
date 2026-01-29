@@ -9,9 +9,8 @@ const commentSchema = new Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
-commentSchema.pre('save', function (next) {
+commentSchema.pre('save', async function () {
     this.updatedAt = new Date();
-    next();
 });
 
 module.exports = model('Comment', commentSchema);

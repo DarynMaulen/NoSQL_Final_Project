@@ -26,16 +26,17 @@ const postSchema = new Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
-postSchema.pre('validate', async function (next) {
+postSchema.pre('validate', async function () {
     if (!this.slug && this.title) {
         let base = makeSlug(this.title);
         this.slug = `${base}-${Date.now().toString().slice(-5)}`;
     }
+    
     if (!this.excerpt && this.content) {
         this.excerpt = this.content.slice(0, 200);
     }
+    
     this.updatedAt = new Date();
-    next();
 });
 
 module.exports = model('Post', postSchema);
