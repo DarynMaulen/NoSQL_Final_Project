@@ -44,6 +44,8 @@ function renderNav() {
     navRoot.innerHTML = '';
     const home = el('a', { href: './index.html' }, 'Home');
     navRoot.appendChild(home);
+    const statsLink = el('a', { href: './stats.html' }, 'Stats');
+    navRoot.appendChild(statsLink);
 
     if (user) {
         navRoot.appendChild(el('a', { href: './post_form.html' }, 'New Post'));
