@@ -2,6 +2,7 @@ const ProfilePage = (() => {
     async function init() {
         const root = document.getElementById('profile-root');
         const user = currentUser();
+
         if (!user) {
             root.innerHTML = `<div class="card"><div>Please <a href="login.html">login</a> to view your profile.</div></div>`;
             return;
@@ -18,8 +19,9 @@ const ProfilePage = (() => {
             root.innerHTML = '';
             root.appendChild(profileCard);
 
-            const postsData = await apiFetch(`/api/posts?author=${user._id}&status=&page=1&limit=50`);
+            const postsData = await apiFetch('/api/posts?author=' + user._id + '&page=1&limit=50');
             const posts = postsData.data || [];
+
             const postsCard = el('div', { class: 'card' });
             postsCard.appendChild(el('h3', {}, 'My posts'));
 
@@ -30,7 +32,17 @@ const ProfilePage = (() => {
 
                 const left = el('div', { class: 'post-info-left' });
                 left.appendChild(el('a', { href: `post.html?id=${p._id}`, class: 'post-link' }, p.title));
-                left.appendChild(el('div', { class: 'small' }, `${p.status.toUpperCase()} • ${fmtDate(p.createdAt)}`));
+
+                const metaDiv = el('div', { class: 'small' });
+
+                const statusSpan = el('span', {
+                    style: getStatusStyle(p.status)
+                }, p.status.toUpperCase());
+
+                metaDiv.appendChild(statusSpan);
+                metaDiv.appendChild(document.createTextNode(` • ${fmtDate(p.createdAt)}`));
+                left.appendChild(metaDiv);
+
                 row.appendChild(left);
 
                 const controls = el('div', { class: 'post-controls-right' });
@@ -40,11 +52,10 @@ const ProfilePage = (() => {
                     class: 'btn btn-edit-profile'
                 }, 'Edit'));
 
-                controls.appendChild(el('button', {
-                    class: 'btn btn-danger btn-sm',
-                    onclick: `ProfilePage.deletePost('${p._id}')`
-                }, 'Delete'));
+                const delBtn = el('button', { class: 'btn btn-danger btn-sm' }, 'Delete');
+                delBtn.onclick = () => deletePost(p._id);
 
+                controls.appendChild(delBtn);
                 row.appendChild(controls);
                 postsCard.appendChild(row);
             });
@@ -53,6 +64,12 @@ const ProfilePage = (() => {
         } catch (err) {
             root.innerHTML = `<div class="card error">Failed to load profile: ${err.message}</div>`;
         }
+    }
+
+    function getStatusStyle(status) {
+        if (status === 'draft') return 'background:#fff3cd; color:#856404; padding:2px 6px; border-radius:4px; font-weight:bold; margin-right:5px;';
+        if (status === 'archived') return 'background:#e2e3e5; color:#383d41; padding:2px 6px; border-radius:4px; font-weight:bold; margin-right:5px;';
+        return 'background:#d4edda; color:#155724; padding:2px 6px; border-radius:4px; font-weight:bold; margin-right:5px;'; // published
     }
 
     async function deletePost(id) {
