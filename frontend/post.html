@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Post — details</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <nav id="nav-root" class="container"></nav>
+
+    <div class="container">
+        <div id="post-root"></div>
+        <div id="comments-root" style="margin-top:18px"></div>
+        <div id="comment-form-root" style="margin-top:12px"></div>
+        <div class="footer">Viewing post • Backend: <span id="api-base"></span></div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/post.js"></script>
+    <script>
+        document.getElementById('api-base').textContent = API_BASE;
+        PostPage.init();
+    </script>
+</body>
+
+</html>

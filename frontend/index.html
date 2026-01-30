@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Blogging — Posts</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <nav id="nav-root" class="container"></nav>
+
+    <div class="container">
+        <header class="header">
+            <h1>Posts</h1>
+            <div class="small">Browse published posts. Click title to open post and comments.</div>
+        </header>
+
+        <div id="posts-root"></div>
+
+        <div id="pager" style="margin-top:12px;" class="small"></div>
+
+        <div class="footer">Frontend: plain HTML + fetch - Backend expected at <span id="api-base"></span></div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/posts.js"></script>
+    <script>
+        document.getElementById('api-base').textContent = API_BASE;
+        PostsPage.init();
+    </script>
+</body>
+
+</html>
