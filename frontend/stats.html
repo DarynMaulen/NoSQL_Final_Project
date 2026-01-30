@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Statistics — Blogging</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <nav id="nav-root" class="container"></nav>
+
+    <div class="container">
+        <header class="header">
+            <h1>Analytics & Stats</h1>
+            <p class="subtitle">Live aggregation results from MongoDB</p>
+        </header>
+
+        <div class="stats-grid">
+            <section class="card" id="top-posts-section">
+                <h2>Top Posts</h2>
+                <div class="controls">
+                    <label>Limit:
+                        <select id="top-limit">
+                            <option>5</option>
+                            <option selected>10</option>
+                            <option>20</option>
+                        </select>
+                    </label>
+                    <button id="refresh-top" class="btn">Refresh</button>
+                </div>
+                <div id="top-posts-root" class="stats-content"></div>
+            </section>
+
+            <section class="card" id="metrics-section">
+                <h2>General Metrics</h2>
+                <div id="metrics-root" class="metrics-grid">Loading...</div>
+            </section>
+        </div>
+
+        <section class="card mt-2" id="popular-tags-section">
+            <h2>Popular Tags</h2>
+            <div class="controls">
+                <label>Limit: <input id="tags-limit" type="number" min="1" max="100" value="10" /></label>
+                <button id="refresh-tags" class="btn">Refresh</button>
+            </div>
+            <div id="popular-tags-root" class="tags-cloud"></div>
+        </section>
+
+        <section class="card mt-2" id="authors-section">
+            <h2>Posts by Author</h2>
+            <div class="controls">
+                <label>Limit: <input id="authors-limit" type="number" min="1" max="200" value="10" /></label>
+                <button id="refresh-authors" class="btn">Refresh</button>
+            </div>
+            <div id="posts-by-author-root" class="stats-content"></div>
+        </section>
+
+        <section class="card mt-2" id="monthly-section">
+            <h2>Monthly Activity</h2>
+            <div class="controls">
+                <label>Year: <input id="stats-year" type="number" min="2000" max="2100" value="2025" /></label>
+                <button id="refresh-monthly" class="btn">Refresh</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </section>
+
+        <footer class="footer">
+            Data from backend aggregations • API base: <span id="api-base"></span>
+        </footer>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/stats.js"></script>
+    <script>
+        document.getElementById('api-base').textContent = API_BASE;
+        StatsPage.init();
+    </script>
+</body>
+
+</html>
