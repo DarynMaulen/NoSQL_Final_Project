@@ -25,37 +25,40 @@ exports.createPost = async (req, res) => {
     }
 };
 
-// List posts with pagination, filters, search
+// List posts
 exports.listPosts = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
+        const { page = 1, limit = 10, status, author } = req.query;
+        const filter = {};
 
-        const filter = { status: 'published' };
-        if (req.query.author) filter.author = req.query.author;
-        if (req.query.tag) filter.tags = req.query.tag;
-        if (req.query.search) {
-            filter.$text = { $search: req.query.search };
+        if (author) filter.author = author;
+
+        const userId = req.user ? req.user._id.toString() : null;
+        const isAdmin = req.user && req.user.role === 'admin';
+        const isOwner = author && userId === author;
+
+        if (isAdmin || isOwner) {
+            if (status) filter.status = status;
+        } else {
+            filter.status = 'published';
         }
+
+        const skip = (page - 1) * limit;
+        const posts = await Post.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(Number(limit))
+            .populate('author', 'username')
+            .lean();
 
         const total = await Post.countDocuments(filter);
 
-        const posts = await Post.find(filter)
-            .populate('author', 'username')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
-
         res.json({
             data: posts,
-            pagination: {
-                total,
-                page,
-                pages: Math.ceil(total / limit)
-            }
+            meta: { total, page: Number(page), limit: Number(limit) }
         });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -109,21 +112,10 @@ exports.getPost = async (req, res) => {
             },
             {
                 $project: {
-                    title: 1,
-                    content: 1,
-                    excerpt: 1,
-                    tags: 1,
-                    category: 1,
-                    likes: 1,
-                    commentsCount: 1,
-                    status: 1,
-                    createdAt: 1,
-                    updatedAt: 1,
-                    'author._id': 1,
-                    'author.username': 1,
-                    'author.email': 1,
-                    comments: 1,
-                    commentsPreview: 1
+                    title: 1, content: 1, excerpt: 1, tags: 1, category: 1,
+                    likes: 1, commentsCount: 1, status: 1, createdAt: 1, updatedAt: 1,
+                    'author._id': 1, 'author.username': 1, 'author.email': 1,
+                    comments: 1, commentsPreview: 1, likedBy: 1
                 }
             }
         ];
