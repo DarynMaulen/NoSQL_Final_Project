@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Create / Edit Post</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+    <nav id="nav-root" class="container"></nav>
+
+    <div class="container">
+        <div id="form-root" class="card"></div>
+        <div class="footer">Create or edit your post • Backend: <span id="api-base"></span></div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/post_form.js"></script>
+    <script>
+        document.getElementById('api-base').textContent = API_BASE;
+        PostForm.init();
+    </script>
+</body>
+
+</html>
