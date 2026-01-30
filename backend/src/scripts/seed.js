@@ -1,3 +1,12 @@
+import bcrypt from 'bcrypt';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import Post from '../models/Post.js';
+import User from '../models/User.js';
+import Comment from '../models/Comment.js';
+
+dotenv.config();
+
 const blogPosts = [
     {
         title: 'My 2026 Tech Stack for Web Development',
@@ -43,30 +52,62 @@ const blogPosts = [
     }
 ];
 
-for (let i = 0; i < blogPosts.length; i++) {
-    const data = blogPosts[i];
-    const p = await Post.create({
-        author: i % 2 === 0 ? bob._id : alice._id,
-        title: data.title,
-        slug: data.title.toLowerCase().replace(/ /g, '-') + '-' + i,
-        content: data.content,
-        tags: data.tags,
-        category: data.category,
-        status: data.status,
-        likes: Math.floor(Math.random() * 100),
-        commentsCount: 0,
-        createdAt: new Date(2025, i, 15) // distributed by months in 2025
-    });
+async function seed() {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log('Connected to DB for seeding...');
 
-    // Generates random comments for each post
-    const commentsNum = Math.floor(Math.random() * 4) + 1;
-    for (let j = 0; j < commentsNum; j++) {
-        await Comment.create({
-            postId: p._id,
-            author: Math.random() > 0.5 ? alice._id : bob._id,
-            text: ['Great article!', 'I need to try this!', 'Useful tips, thanks!', 'Interesting point of view.'][j]
+        const salt = await bcrypt.genSalt(10);
+        const hashedSafePassword = await bcrypt.hash('password123', salt);
+
+        const alice = await User.create({
+            username: 'Alice',
+            email: 'alice2@example.com',
+            passwordHash: hashedSafePassword
         });
-        p.commentsCount++;
+
+        const bob = await User.create({
+            username: 'Bob',
+            email: 'bob@example.com',
+            passwordHash: hashedSafePassword
+        });
+
+        console.log('Users created...');
+
+        for (let i = 0; i < blogPosts.length; i++) {
+            const data = blogPosts[i];
+            const p = await Post.create({
+                author: i % 2 === 0 ? bob._id : alice._id,
+                title: data.title,
+                slug: data.title.toLowerCase().replace(/ /g, '-') + '-' + i,
+                content: data.content,
+                tags: data.tags,
+                category: data.category,
+                status: data.status,
+                likes: Math.floor(Math.random() * 100),
+                commentsCount: 0,
+                createdAt: new Date(2025, i, 15)
+            });
+
+            const commentsNum = Math.floor(Math.random() * 4) + 1;
+            for (let j = 0; j < commentsNum; j++) {
+                await Comment.create({
+                    postId: p._id,
+                    author: Math.random() > 0.5 ? alice._id : bob._id,
+                    text: ['Great article!', 'I need to try this!', 'Useful tips, thanks!', 'Interesting point of view.'][j],
+                    parentId: null
+                });
+                p.commentsCount++;
+            }
+            await p.save();
+        }
+
+        console.log('Database seeded successfully!');
+        process.exit(0);
+    } catch (err) {
+        console.error('Error seeding database:', err);
+        process.exit(1);
     }
-    await p.save();
 }
+
+seed();

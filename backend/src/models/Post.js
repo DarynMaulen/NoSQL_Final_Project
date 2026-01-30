@@ -1,3 +1,4 @@
+// src/models/Post.js
 const { Schema, model, Types } = require('mongoose');
 
 function makeSlug(title) {
@@ -9,6 +10,14 @@ function makeSlug(title) {
         .replace(/\s+/g, '-')
         .slice(0, 120);
 }
+
+const previewSchema = new Schema({
+    _id: { type: Types.ObjectId, required: true }, // id of referenced comment
+    authorId: { type: Types.ObjectId, ref: 'User' },
+    authorName: { type: String },
+    text: { type: String },
+    createdAt: { type: Date, default: Date.now }
+}, { _id: false }); // _id stored manually
 
 const postSchema = new Schema({
     author: { type: Types.ObjectId, ref: 'User', required: true },
@@ -23,7 +32,9 @@ const postSchema = new Schema({
     status: { type: String, enum: ['published', 'draft', 'archived'], default: 'draft' },
     commentsCount: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now, index: true },
-    updatedAt: { type: Date, default: Date.now }
+    updatedAt: { type: Date, default: Date.now },
+    // Embedded preview (manually set _id)
+    commentsPreview: [previewSchema]
 });
 
 postSchema.pre('validate', async function () {
@@ -31,11 +42,9 @@ postSchema.pre('validate', async function () {
         let base = makeSlug(this.title);
         this.slug = `${base}-${Date.now().toString().slice(-5)}`;
     }
-    
     if (!this.excerpt && this.content) {
         this.excerpt = this.content.slice(0, 200);
     }
-    
     this.updatedAt = new Date();
 });
 

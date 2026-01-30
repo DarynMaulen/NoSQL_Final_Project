@@ -28,41 +28,35 @@ exports.createPost = async (req, res) => {
 // List posts with pagination, filters, search
 exports.listPosts = async (req, res) => {
     try {
-        const {
-            page = 1,
-            limit = 10,
-            tag,
-            category,
-            author,
-            status,
-            search,
-            sort = '-createdAt'
-        } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
-        const q = {};
-        if (status) q.status = status;
-        if (tag) q.tags = tag;
-        if (category) q.category = category;
-        if (author && mongoose.Types.ObjectId.isValid(author)) {
-            q.author = new mongoose.Types.ObjectId(author);
+        const filter = { status: 'published' };
+        if (req.query.author) filter.author = req.query.author;
+        if (req.query.tag) filter.tags = req.query.tag;
+        if (req.query.search) {
+            filter.$text = { $search: req.query.search };
         }
-        if (search) q.$text = { $search: search };
 
-        const skip = (Math.max(1, parseInt(page)) - 1) * Math.max(1, parseInt(limit));
+        const total = await Post.countDocuments(filter);
 
-        const posts = await Post.find(q)
-            .sort(sort)
+        const posts = await Post.find(filter)
+            .populate('author', 'username')
+            .sort({ createdAt: -1 })
             .skip(skip)
-            .limit(parseInt(limit))
-            .populate({ path: 'author', select: 'username email' })
-            .lean();
+            .limit(limit);
 
-        const total = await Post.countDocuments(q);
-
-        return res.json({ data: posts, meta: { total, page: parseInt(page), limit: parseInt(limit) } });
+        res.json({
+            data: posts,
+            pagination: {
+                total,
+                page,
+                pages: Math.ceil(total / limit)
+            }
+        });
     } catch (err) {
-        console.error('listPosts', err);
-        return res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error' });
     }
 };
 
@@ -128,7 +122,8 @@ exports.getPost = async (req, res) => {
                     'author._id': 1,
                     'author.username': 1,
                     'author.email': 1,
-                    comments: 1
+                    comments: 1,
+                    commentsPreview: 1
                 }
             }
         ];

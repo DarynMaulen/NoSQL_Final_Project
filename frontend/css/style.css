@@ -293,3 +293,46 @@ textarea {
     font-size: 0.8em;
     border-top: 1px solid #eee;
 }
+
+.post-preview-box {
+    margin-top: 12px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #007bff;
+}
+
+.preview-title {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.preview-item {
+    font-size: 0.85rem;
+    color: #343a40;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #eee;
+}
+
+.preview-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.card {
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    transition: box-shadow 0.2s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
