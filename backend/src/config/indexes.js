@@ -1,33 +1,37 @@
-const mongoose = require('mongoose');
 const Post = require('../models/Post');
 const Comment = require('../models/Comment');
 const User = require('../models/User');
 
 async function ensureIndexes() {
-    // Posts:
-    // 1) unique slug index
+    // existing
     await Post.collection.createIndex({ slug: 1 }, { unique: true, background: true });
 
-    // 2) compound index for author + createdAt to speed up "posts by author" sorted by time
-    await Post.collection.createIndex({ author: 1, createdAt: -1 }, { background: true });
+    // compound indexes:
+    // 1) author + status + createdAt (fast posts by author, by status, sorted by date)
+    await Post.collection.createIndex({ author: 1, status: 1, createdAt: -1 }, { background: true });
 
-    // 3) tags multikey index for filtering by tag
-    await Post.collection.createIndex({ tags: 1 }, { background: true });
+    // 2) tags + status + createdAt (filter by tag & status, sort by date)
+    await Post.collection.createIndex({ tags: 1, status: 1, createdAt: -1 }, { background: true });
 
-    // 4) text index for search on title + content + tags
-    await Post.collection.createIndex({ title: 'text', content: 'text', tags: 'text' }, { background: true, name: 'posts_text_idx' });
+    // 3) likes + createdAt (for top posts by likes then by recency)
+    await Post.collection.createIndex({ likes: -1, createdAt: -1 }, { background: true });
 
-    // 5) index for status + createdAt (filtering by status and sorting / range queries)
+    // 4) status + createdAt already helps monthly aggregation and listing
     await Post.collection.createIndex({ status: 1, createdAt: -1 }, { background: true });
 
-    // Comments:
-    await Comment.collection.createIndex({ postId: 1, createdAt: -1 }, { background: true });
+    // text index
+    await Post.collection.createIndex({ title: 'text', content: 'text', tags: 'text' }, { background: true, name: 'posts_text_idx' });
 
-    // Users:
+    // Comments
+    await Comment.collection.createIndex({ postId: 1, createdAt: -1 }, { background: true });
+    // Optionally: author + createdAt (for user activity queries)
+    await Comment.collection.createIndex({ author: 1, createdAt: -1 }, { background: true });
+
+    // Users
     await User.collection.createIndex({ email: 1 }, { unique: true, background: true });
     await User.collection.createIndex({ username: 1 }, { unique: true, background: true });
 
-    console.log('Indexes ensured');
+    console.log('Indexes ensured (compound + others)');
 }
 
 module.exports = ensureIndexes;
