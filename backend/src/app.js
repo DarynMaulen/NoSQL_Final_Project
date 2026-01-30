@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const authRoutes = require('./routes/auth');
 const postsRoutes = require('./routes/posts');
 const commentsRoutes = require('./routes/comments');
+const statsRoutes = require('./routes/stats');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/comments', commentsRoutes);
+app.use('/api/stats', statsRoutes);
 
 // health
 app.get('/health', (req, res) => res.json({ ok: true, time: new Date() }));
