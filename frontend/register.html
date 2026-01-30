@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Register</title>
     <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -10,25 +11,33 @@
 <body>
     <nav id="nav-root" class="container"></nav>
 
-    <div class="container">
-        <div class="card" style="max-width:480px;">
-            <h2>Register</h2>
+    <div class="container auth-container">
+        <div class="card" style="width: 100%; max-width:400px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+            <h2 style="text-align: center; margin-bottom: 24px;">Register</h2>
+
             <div id="register-error" class="error"></div>
-            <div>
-                <label>Username</label>
-                <input id="reg-username" class="input" />
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight: 600; font-size: 14px;">Username</label>
+                <input id="reg-username" class="input" placeholder="Your name" />
             </div>
-            <div>
-                <label>Email</label>
-                <input id="reg-email" class="input" />
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight: 600; font-size: 14px;">Email</label>
+                <input id="reg-email" class="input" placeholder="email@example.com" />
             </div>
-            <div>
-                <label>Password</label>
-                <input id="reg-password" type="password" class="input" />
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight: 600; font-size: 14px;">Password</label>
+                <input id="reg-password" type="password" class="input" placeholder="••••••••" />
             </div>
-            <div class="controls" style="margin-top:12px;">
-                <button class="btn btn-primary" onclick="Auth.register()">Register</button>
-                <a href="login.html"><button class="btn">Login</button></a>
+
+            <div class="controls" style="margin-top:20px; flex-direction: column; gap: 10px;">
+                <button class="btn btn-primary" style="width: 100%;" onclick="Auth.register()">Register</button>
+                <div style="text-align: center; font-size: 13px; color: #666; margin-top: 10px;">
+                    Already have an account? <a href="login.html"
+                        style="color: #1a73e8; text-decoration: none;">Login</a>
+                </div>
             </div>
         </div>
     </div>
